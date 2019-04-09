@@ -8,7 +8,7 @@ import UserReps from "./user-reps-manager";
 
 export default class ValueRenderer extends React.Component {
   static propTypes = {
-    valueToRender: PropTypes.any
+    valueToRender: PropTypes.any // eslint-disable-line react/forbid-prop-types
   };
 
   constructor(props) {

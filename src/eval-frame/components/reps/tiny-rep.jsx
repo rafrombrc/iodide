@@ -37,6 +37,10 @@ const ObjectRep = ({ objClass, size }) => (
     {objClass}({size})
   </ClassInfoText>
 );
+ObjectRep.propTypes = {
+  objClass: PropTypes.string.isRequired,
+  size: PropTypes.number
+};
 
 const Ell = styled(RepBaseText)`
   color: ${ellipsisColor};
@@ -50,19 +54,23 @@ const Sep = styled(RepBaseText)`
 const StringText = styled(RepBaseText)`
   color: ${stringColor};
 `;
-const createQuotedStringRep = (lQuote, rQuote) => ({
-  size,
-  stringValue,
-  isTruncated
-}) => (
-  <span>
-    <Sep>{lQuote}</Sep>
-    <StringText>{stringValue}</StringText>
-    {isTruncated ? <Ellipsis /> : ""}
-    <Sep>{rQuote}</Sep>
-    {isTruncated ? <ClassInfoText>({size})</ClassInfoText> : ""}
-  </span>
-);
+const createQuotedStringRep = (lQuote, rQuote) => {
+  const InnerQuotedStringRep = ({ size, stringValue, isTruncated }) => (
+    <span>
+      <Sep>{lQuote}</Sep>
+      <StringText>{stringValue}</StringText>
+      {isTruncated ? <Ellipsis /> : ""}
+      <Sep>{rQuote}</Sep>
+      {isTruncated ? <ClassInfoText>({size})</ClassInfoText> : ""}
+    </span>
+  );
+  InnerQuotedStringRep.propTypes = {
+    size: PropTypes.number,
+    stringValue: PropTypes.string.isRequired,
+    isTruncated: PropTypes.bool.isRequired
+  };
+  return InnerQuotedStringRep;
+};
 
 const StringRep = createQuotedStringRep('"', '"');
 const RegexRep = createQuotedStringRep("/", "/");
@@ -83,6 +91,10 @@ const SymbolRep = ({ stringValue, isTruncated }) => (
     )}
   </span>
 );
+SymbolRep.propTypes = {
+  stringValue: PropTypes.string.isRequired,
+  isTruncated: PropTypes.bool.isRequired
+};
 
 const FunctionText = styled(RepBaseText)`
   color: ${functionColor}
@@ -97,11 +109,19 @@ const FunctionRep = ({ objClass, stringValue, isTruncated }) => (
     <FunctionText>()</FunctionText>
   </span>
 );
+FunctionRep.propTypes = {
+  objClass: PropTypes.string.isRequired,
+  stringValue: PropTypes.string.isRequired,
+  isTruncated: PropTypes.bool.isRequired
+};
 
 const ErrorText = styled(RepBaseText)`
   color: ${errorColor};
 `;
 const ErrorRep = ({ objClass }) => <ErrorText>{objClass}</ErrorText>;
+ErrorRep.propTypes = {
+  objClass: PropTypes.string.isRequired
+};
 
 const typeToTinyRepMapping = {
   Number: TinyStringValueWithColor(numberColor),
@@ -144,19 +164,19 @@ const typeToTinyRepMapping = {
 
 const handledTypes = Object.keys(typeToTinyRepMapping);
 
-export default class TinyRep extends React.Component {
+export default class TinyRep extends React.PureComponent {
   static propTypes = {
-    serializedObj: PropTypes.shape({
-      objClass: PropTypes.string.isRequired,
-      objType: PropTypes.string.isRequired,
-      size: PropTypes.number,
-      stringValue: PropTypes.string.isRequired,
-      isTruncated: PropTypes.bool.isRequired
-    })
+    objType: PropTypes.string.isRequired,
+    /* eslint-disable react/no-unused-prop-types */
+    isTruncated: PropTypes.bool.isRequired,
+    objClass: PropTypes.string.isRequired,
+    size: PropTypes.number,
+    stringValue: PropTypes.string.isRequired
+    /* eslint-enable react/no-unused-prop-types */
   };
   render() {
-    const { objType } = this.props.serializedObj;
+    const { objType } = this.props;
     const repType = handledTypes.includes(objType) ? objType : "Object";
-    return typeToTinyRepMapping[repType](this.props.serializedObj);
+    return typeToTinyRepMapping[repType](this.props);
   }
 }

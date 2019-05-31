@@ -57,20 +57,6 @@ tasks.evaluateChunkAndSelectBelow = new UserTask({
   }
 });
 
-tasks.loginGithub = new UserTask({
-  title: "Login using GitHub",
-  callback(loginSuccess = undefined) {
-    dispatcher.login(loginSuccess);
-  }
-});
-
-tasks.logoutGithub = new UserTask({
-  title: "Logout",
-  callback() {
-    dispatcher.logout();
-  }
-});
-
 tasks.toggleWrapInEditors = new UserTask({
   title: "Toggle wrapping in editors",
   displayKeybinding: "Alt+w", // '\u2193',
@@ -84,7 +70,7 @@ tasks.toggleWrapInEditors = new UserTask({
 tasks.changeTitle = new UserTask({
   title: "Change Title",
   callback(t) {
-    dispatcher.changePageTitle(t);
+    dispatcher.updateTitle(t);
   }
 });
 

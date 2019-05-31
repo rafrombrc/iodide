@@ -1,17 +1,18 @@
 import React from "react";
+import PropTypes from "prop-types";
 import styled from "react-emotion";
 import Settings from "@material-ui/icons/Settings";
 import MoreHoriz from "@material-ui/icons/MoreHoriz";
+import format from "date-fns/format";
 
 import PageBody from "../components/page-body";
 import Header from "../components/header";
 import BelowFoldContainer from "../components/page-containers/below-fold-container";
 import { MediumUserName } from "../components/user-name";
-import { fetchWithCSRFTokenAndJSONContent } from "../../shared/fetch-with-csrf-token";
+import { deleteNotebookRequest } from "../../shared/server-api/notebook";
 import NotebookActionsMenu from "../components/notebook-actions-menu";
 import RevisionActionsMenu from "../components/revision-actions-menu";
 import FilesList from "../components/files-list";
-import { monthDayYear } from "../../shared/date-formatters";
 
 import { BodyIconStyle, ActionsContainer } from "../style/icon-styles";
 
@@ -43,6 +44,11 @@ const RevisionsPageHeader = styled("h2")`
   }
 `;
 
+const RevisionDateLink = styled.a`
+  display: block;
+  font-size: ${props => (props.size === "small" ? "12px" : "auto")};
+`;
+
 const ForkedFromLinkContainer = styled("div")`
   margin-bottom: 20px;
   font-style: italic;
@@ -69,7 +75,38 @@ const ForkedFromLink = ({ revisionID, notebookID, forkOwner, forkTitle }) => {
   );
 };
 
+ForkedFromLink.propTypes = {
+  revisionID: PropTypes.number,
+  notebookID: PropTypes.number,
+  forkOwner: PropTypes.string,
+  forkTitle: PropTypes.string
+};
+
 export default class RevisionsPage extends React.Component {
+  static propTypes = {
+    userInfo: PropTypes.shape({
+      name: PropTypes.string
+    }),
+    ownerInfo: PropTypes.shape({
+      notebookId: PropTypes.number,
+      forkedFromRevisionID: PropTypes.number,
+      title: PropTypes.string,
+      forkedFromTitle: PropTypes.string,
+      forkedFromUsername: PropTypes.string,
+      forkedFromNotebookID: PropTypes.number,
+      username: PropTypes.string,
+      full_name: PropTypes.string,
+      avatar: PropTypes.string
+    }),
+    revisions: PropTypes.arrayOf(
+      PropTypes.shape({
+        notebookId: PropTypes.number,
+        id: PropTypes.number,
+        title: PropTypes.string
+      })
+    ),
+    files: PropTypes.arrayOf(PropTypes.shape({}))
+  };
   constructor(props) {
     super(props);
     this.state = { revisions: this.props.revisions, files: this.props.files };
@@ -97,14 +134,10 @@ export default class RevisionsPage extends React.Component {
     this.setState({ files });
   }
 
-  onDeleteRevision(revisionID) {
+  async onDeleteRevision(revisionID) {
     if (this.state.revisions.length === 1) {
-      fetchWithCSRFTokenAndJSONContent(
-        `/api/v1/notebooks/${this.props.ownerInfo.notebookId}/`,
-        {
-          method: "DELETE"
-        }
-      ).then(this.onDeleteNotebook);
+      await deleteNotebookRequest(this.props.ownerInfo.notebookId);
+      this.onDeleteNotebook();
     } else {
       const revisions = this.state.revisions.filter(r => r.id !== revisionID);
       this.setState({ revisions });
@@ -203,9 +236,21 @@ export default class RevisionsPage extends React.Component {
                     </ListLinkSet>
                   </ListMetadata>
                   <ListDate>
-                    <a href={`/notebooks/${revision.notebookId}/revisions/`}>
-                      {monthDayYear(revision.date)}
-                    </a>
+                    <RevisionDateLink
+                      href={`/notebooks/${revision.notebookId}?revision=${
+                        revision.id
+                      }`}
+                    >
+                      {format(new Date(revision.date), "MMM dd, uuuu")}
+                    </RevisionDateLink>
+                    <RevisionDateLink
+                      size="small"
+                      href={`/notebooks/${revision.notebookId}?revision=${
+                        revision.id
+                      }`}
+                    >
+                      {format(new Date(revision.date), "HH:mm:ss")}
+                    </RevisionDateLink>
                   </ListDate>
                   <ListMetadata>
                     {isCurrentUsersPage ? (

@@ -10,7 +10,9 @@ import EmptyPaneContents from "./empty-pane-contents";
 export class DeclaredVariablesPaneUnconnected extends React.Component {
   static propTypes = {
     userDefinedVarNames: PropTypes.arrayOf(PropTypes.string),
-    environmentVariables: PropTypes.object
+    // FIXME environmentVariables are deprecated at this point
+    environmentVariables: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    paneVisible: PropTypes.bool.isRequired
   };
 
   shouldComponentUpdate(nextProps) {
@@ -51,11 +53,7 @@ export class DeclaredVariablesPaneUnconnected extends React.Component {
       <div className="declared-variables-list">
         <h3>User Defined Variables</h3>
         {this.props.userDefinedVarNames.map(varName => (
-          <DeclaredVariable
-            value={window[varName]}
-            varName={varName}
-            key={varName}
-          />
+          <DeclaredVariable varName={varName} key={varName} />
         ))}
       </div>
     ) : (

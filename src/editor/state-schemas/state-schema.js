@@ -1,7 +1,17 @@
 import { languageDefinitions } from "./language-definitions";
+import { historySchema } from "./history-schema";
 
 export const NONCODE_EVAL_TYPES = ["css", "md", "meta", "raw"];
 export const RUNNABLE_CHUNK_TYPES = ["plugin", "fetch"];
+export const FETCH_CHUNK_TYPES = [
+  "css",
+  "js",
+  "text",
+  "blob",
+  "json",
+  "arrayBuffer"
+];
+export const IODIDE_API_LOAD_TYPES = ["text", "blob", "json", "arrayBuffer"];
 
 const appMessageSchema = {
   type: "object",
@@ -10,30 +20,6 @@ const appMessageSchema = {
     details: { type: "string" },
     when: { type: "string" },
     id: { type: "integer", minimum: 0 }
-  },
-  additionalProperties: false
-};
-
-export const historySchema = {
-  type: "object",
-  properties: {
-    cellId: { type: ["integer", "null"] },
-    content: { type: "string" },
-    historyId: { type: "string" },
-    historyType: {
-      type: "string",
-      enum: [
-        "APP_MESSAGE",
-        "FETCH_CELL_INFO",
-        "CONSOLE_INPUT",
-        "CONSOLE_OUTPUT",
-        "CONSOLE_MESSAGE"
-      ]
-    },
-    lastRan: { type: "integer" },
-    level: { type: "string", enum: ["INFO", "LOG", "WARN", "ERROR"] },
-    language: { type: "string" },
-    value: {}
   },
   additionalProperties: false
 };
@@ -267,10 +253,6 @@ export const stateProperties = {
       }
     }
   },
-  checkingRevisionIsLatest: {
-    type: "boolean",
-    default: false
-  },
   notebookInfo: {
     type: "object",
     properties: {
@@ -279,9 +261,9 @@ export const stateProperties = {
       notebook_id: { type: "integer" },
       revision_id: { type: "integer" },
       revision_is_latest: { type: "boolean" },
-      connectionStatus: {
+      serverSaveStatus: {
         type: "string",
-        enum: ["CONNECTION_ACTIVE", "CONNECTION_LOST"]
+        enum: ["OK", "ERROR_UNAUTHORIZED", "ERROR_OUT_OF_DATE", "ERROR_GENERAL"]
       },
       connectionMode: {
         type: "string",
@@ -295,7 +277,7 @@ export const stateProperties = {
       revision_is_latest: true,
       user_can_save: false,
       connectionMode: "STANDALONE",
-      connectionStatus: "CONNECTION_ACTIVE",
+      serverSaveStatus: "OK",
       files: []
     }
   },

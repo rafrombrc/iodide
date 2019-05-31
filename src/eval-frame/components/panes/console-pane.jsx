@@ -19,7 +19,8 @@ const HelpIcon = styled(HelpOutline)`
 
 export class ConsolePaneUnconnected extends React.Component {
   static propTypes = {
-    history: PropTypes.array
+    historyIds: PropTypes.arrayOf(PropTypes.string),
+    paneVisible: PropTypes.bool.isRequired
   };
 
   constructor(props) {
@@ -44,12 +45,9 @@ export class ConsolePaneUnconnected extends React.Component {
 
   render() {
     let histContents = [];
-    if (this.props.history.length) {
-      histContents = this.props.history.map(historyItem => (
-        <HistoryItem
-          historyItem={historyItem}
-          key={`history-${historyItem.lastRan}-${historyItem.historyId}`}
-        />
+    if (this.props.historyIds.length) {
+      histContents = this.props.historyIds.map(historyId => (
+        <HistoryItem historyId={historyId} key={historyId} />
       ));
     } else {
       histContents.push(
@@ -98,11 +96,27 @@ export class ConsolePaneUnconnected extends React.Component {
   }
 }
 
+function areStatesEqual(next, prev) {
+  return (
+    next.panePositions.ConsolePositioner.display ===
+      prev.panePositions.ConsolePositioner.display &&
+    deepEqual(
+      next.history.map(h => h.historyId),
+      prev.history.map(h => h.historyId)
+    )
+  );
+}
+
 export function mapStateToProps(state) {
   return {
-    history: state.history,
+    historyIds: state.history.map(h => h.historyId),
     paneVisible: state.panePositions.ConsolePositioner.display === "block"
   };
 }
 
-export default connect(mapStateToProps)(ConsolePaneUnconnected);
+export default connect(
+  mapStateToProps,
+  null,
+  null,
+  { areStatesEqual }
+)(ConsolePaneUnconnected);

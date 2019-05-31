@@ -1,6 +1,5 @@
 import { newNotebook } from "../state-schemas/editor-state-prototypes";
 import { historyIdGen } from "../tools/id-generators";
-import { exportJsmdBundle, titleToHtmlFilename } from "../tools/export-tools";
 
 function newAppMessage(
   appMessageId,
@@ -36,45 +35,12 @@ initialVariables.add("CodeMirror");
 
 const notebookReducer = (state = newNotebook(), action) => {
   let nextState;
-  let title;
   switch (action.type) {
     case "RESET_NOTEBOOK":
       return Object.assign(newNotebook(), action.userData);
 
-    case "EXPORT_NOTEBOOK": {
-      const exportState = Object.assign({}, state, {
-        viewMode: action.exportAsReport ? "REPORT_VIEW" : "EXPLORE_VIEW"
-      });
-      const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(
-        exportJsmdBundle(exportState.jsmd, exportState.title)
-      )}`;
-      const dlAnchorElem = document.getElementById("export-anchor");
-      dlAnchorElem.setAttribute("href", dataStr);
-      title =
-        exportState.title === undefined ? "new-notebook" : exportState.title;
-      dlAnchorElem.setAttribute("download", titleToHtmlFilename(title));
-      dlAnchorElem.click();
-
-      return state;
-    }
-
     case "TOGGLE_WRAP_IN_EDITORS":
       return Object.assign({}, state, { wrapEditors: !state.wrapEditors });
-
-    case "UPDATE_NOTEBOOK_INFO":
-      return Object.assign({}, state, { notebookInfo: action.notebookInfo });
-
-    case "SET_PREVIOUS_AUTOSAVE": {
-      const { hasPreviousAutosave } = action;
-      return Object.assign({}, state, { hasPreviousAutosave });
-    }
-
-    case "SET_CONNECTION_STATUS": {
-      const { status } = action;
-      return Object.assign({}, state, {
-        notebookInfo: { ...state.notebookInfo, connectionStatus: status }
-      });
-    }
 
     case "REPLACE_NOTEBOOK_CONTENT": {
       return Object.assign({}, state, {
@@ -175,44 +141,48 @@ const notebookReducer = (state = newNotebook(), action) => {
       });
     }
 
-    case "NOTEBOOK_SAVED": {
-      return Object.assign({}, state, {
-        lastSaved: new Date().toISOString(),
-        notebookInfo: Object.assign({}, state.notebookInfo, {
-          user_can_save: true,
-          revision_id: action.newRevisionId
-        })
-      });
-    }
-
-    case "UPDATE_CHECKING_NOTEBOOK_REVISION_IS_LATEST": {
-      const { checkingRevisionIsLatest } = action;
-      return Object.assign({}, state, { checkingRevisionIsLatest });
-    }
-
-    case "UPDATE_NOTEBOOK_REVISION_IS_LATEST": {
-      const { revisionIsLatest } = action;
+    case "UPDATE_NOTEBOOK_INFO": {
       return Object.assign({}, state, {
         notebookInfo: {
           ...(state.notebookInfo || {}),
-          revision_is_latest: revisionIsLatest
+          ...action.notebookInfo
         }
       });
     }
 
-    case "ADD_NOTEBOOK_ID": {
-      const notebookId = action.id;
-      const notebookInfo = Object.assign({}, state.notebookInfo);
-      notebookInfo.notebook_id = notebookId;
-      return Object.assign({}, state, { notebookInfo });
-    }
-
-    case "CHANGE_PAGE_TITLE":
+    case "UPDATE_NOTEBOOK_TITLE":
       return Object.assign({}, state, { title: action.title });
 
     case "SET_VIEW_MODE": {
       const { viewMode } = action;
       return Object.assign({}, state, { viewMode });
+    }
+
+    case "ADD_FILE_TO_NOTEBOOK": {
+      const { filename, lastUpdated, fileID } = action;
+      const files = state.notebookInfo.files.map(f => Object.assign({}, f));
+      if (!files.map(f => f.filename).includes(filename))
+        files.push({
+          filename,
+          lastUpdated,
+          id: fileID
+        });
+      else {
+        files.find(f => f.filename === filename).lastUpdated = lastUpdated;
+      }
+      const notebookInfo = Object.assign({}, state.notebookInfo, {
+        files
+      });
+      return Object.assign({}, state, { notebookInfo });
+    }
+
+    case "DELETE_FILE_FROM_NOTEBOOK": {
+      const { fileID } = action;
+      const { files } = state.notebookInfo;
+      const notebookInfo = Object.assign({}, state.notebookInfo, {
+        files: files.filter(f => f.id !== fileID).map(f => Object.assign({}, f))
+      });
+      return Object.assign({}, state, { notebookInfo });
     }
 
     case "SET_MODAL_STATE": {
@@ -293,13 +263,15 @@ const notebookReducer = (state = newNotebook(), action) => {
       return Object.assign({}, state, { panePositions: action.panePositions });
     }
 
-    case "SET_MOST_RECENT_SAVED_CONTENT": {
-      return Object.assign({}, state, {
-        previouslySavedContent: {
-          jsmd: state.jsmd,
-          title: state.title
-        }
-      });
+    case "SET_NOTEBOOK_OWNER_IN_SESSION": {
+      const { notebookInfo, userData } = state;
+      const newNotebookInfo = Object.assign({}, notebookInfo);
+      newNotebookInfo.username = userData.name;
+      newNotebookInfo.user_can_save = true;
+      newNotebookInfo.files = newNotebookInfo.files.map(f =>
+        Object.assign({}, f)
+      );
+      return Object.assign({}, state, { notebookInfo: newNotebookInfo });
     }
 
     default: {

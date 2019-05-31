@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Popover from "../../shared/components/popover";
 import Menu from "../../shared/components/menu";
 import MenuItem from "../../shared/components/menu-item";
@@ -7,11 +8,27 @@ import DeleteModal from "./delete-modal";
 import UploadModal from "./upload-modal";
 import {
   selectFileAndFormatMetadata,
-  uploadFile,
-  updateFile
-} from "../../shared/upload-file";
+  uploadFile
+} from "../../shared/utils/file-operations";
+import { deleteNotebookRequest } from "../../shared/server-api/notebook";
 
 export default class NotebookActionsMenu extends React.Component {
+  static propTypes = {
+    files: PropTypes.arrayOf(PropTypes.object),
+    onUploadFile: PropTypes.func,
+    notebookID: PropTypes.number,
+    hideRevisions: PropTypes.bool,
+    triggerElement: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    placement: PropTypes.string,
+    onDelete: PropTypes.func,
+    modalBody: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.string,
+      PropTypes.array
+    ]),
+    isUserAccount: PropTypes.bool,
+    notebookTitle: PropTypes.string
+  };
   constructor(props) {
     super(props);
     this.state = {
@@ -40,7 +57,7 @@ export default class NotebookActionsMenu extends React.Component {
       let filename;
       try {
         const metadata = JSON.parse(formData.get("metadata"));
-          filename = metadata.filename // eslint-disable-line
+        filename = metadata.filename; // eslint-disable-line
       } catch (err) {
         throw err;
       }
@@ -64,21 +81,20 @@ export default class NotebookActionsMenu extends React.Component {
     });
   }
 
-  uploadFile(formData) {
-    return uploadFile(formData)
-      .then(response => response.json())
-      .then(response => {
-        if (this.props.onUploadFile) this.props.onUploadFile(response);
-      });
+  async uploadFile(formData) {
+    const data = await uploadFile(formData);
+    // FIXME: uploadFile needs better error handling.
+    if (this.props.onUploadFile) this.props.onUploadFile(data);
   }
 
-  updateFile() {
-    return updateFile(this.state.oldFile.id, this.state.newFile)
-      .then(response => response.json())
-      .then(response => {
-        if (this.props.onUploadFile) this.props.onUploadFile(response);
-        this.hideUploadFileConfirmationModal();
-      });
+  async updateFile() {
+    const response = await uploadFile(
+      this.state.newFile,
+      this.state.oldFile.id
+    );
+    const data = await response.json();
+    if (this.props.onUploadFile) this.props.onUploadFile(data);
+    this.hideUploadFileConfirmationModal();
   }
 
   hideDeleteModal() {
@@ -146,7 +162,7 @@ export default class NotebookActionsMenu extends React.Component {
           onCancel={this.hideDeleteModal}
           onDelete={this.props.onDelete}
           elementID={this.props.notebookID}
-          url={`/api/v1/notebooks/${this.props.notebookID}/`}
+          deleteFunction={deleteNotebookRequest}
         />
         <UploadModal
           visible={this.state.uploadFileConfirmationVisible}

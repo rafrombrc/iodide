@@ -20,8 +20,7 @@ In this mode, resource paths are set to be relative to the `dev/` directory. Thu
 
 ### Server mode
 
-We have been building an experimental iodide server based on Python and Django. Currently the main features
-it supports are login/identity (via the GitHub API). To test/run it locally, follow this set of steps:
+To develop or test server-side functionality like saving notebooks or authentication, you will need to set up a server environment using docker and docker-compose. Follow this set of steps:
 
 * Register a [GitHub oauth token](https://github.com/settings/applications/new). Set the homepage URL to be
 "http://localhost:8000" and the authentication callback URL to be "http://localhost:8000/oauth/complete/github/".
@@ -73,3 +72,6 @@ mkdocs build
 
 Run `npm test` to run the test suite once, or `npm test --watch` to run the suite in watch mode, which will automatically re-run the tests when the source or tests have changed.
 
+## Running with a local build of Pyodide
+
+If you want to test your local changes to Pyodide with your local build of Iodide, there are [instructions here](https://github.com/iodide-project/pyodide/pull/455).

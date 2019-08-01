@@ -26,7 +26,7 @@ describe("restoreLocalAutosave", () => {
   beforeEach(() => {
     writeLocalAutosave({
       ...initialState,
-      jsmd: "autosaved",
+      iomd: "autosaved",
       title: "autosaved title"
     });
   });
@@ -48,9 +48,7 @@ describe("restoreLocalAutosave", () => {
       }
     }
   ].forEach(preconditionFail => {
-    it(`does nothing if precondition "${
-      preconditionFail.name
-    }" is not met`, async () => {
+    it(`does nothing if precondition "${preconditionFail.name}" is not met`, async () => {
       const store = mockStore({
         userData: {
           ...initialState.userData,
@@ -83,21 +81,7 @@ describe("restoreLocalAutosave", () => {
       undefined
     );
     expect(store.getActions()).toEqual([
-      { type: "UPDATE_MARKDOWN_CHUNKS", reportChunks: [] },
-      {
-        type: "UPDATE_JSMD_CONTENT",
-        jsmd: "autosaved",
-        jsmdChunks: [
-          {
-            chunkContent: "autosaved",
-            chunkId: "1679214136_0",
-            chunkType: "",
-            endLine: 0,
-            evalFlags: [],
-            startLine: 0
-          }
-        ]
-      },
+      { type: "UPDATE_IOMD_CONTENT", iomd: "autosaved" },
       { type: "UPDATE_NOTEBOOK_TITLE", title: "autosaved title" },
       {
         type: "UPDATE_NOTEBOOK_INFO",

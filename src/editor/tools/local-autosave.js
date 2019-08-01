@@ -14,6 +14,11 @@ async function getLocalAutosave(state) {
   return autosave || {};
 }
 
+async function haveLocalAutosave(state) {
+  const localAutosave = await getLocalAutosave(state);
+  return Object.keys(localAutosave).length > 0;
+}
+
 async function clearLocalAutosave(state) {
   const autosaveKey = await getAutosaveKey(state);
   await db.autosave.delete(autosaveKey);
@@ -23,7 +28,7 @@ async function writeLocalAutosave(state) {
   const autosaveKey = getAutosaveKey(state);
   db.autosave.put(
     {
-      jsmd: state.jsmd,
+      iomd: state.iomd,
       title: state.title,
       parentRevisionId: state.notebookInfo.revision_id
     },
@@ -31,4 +36,9 @@ async function writeLocalAutosave(state) {
   );
 }
 
-export { getLocalAutosave, clearLocalAutosave, writeLocalAutosave };
+export {
+  getLocalAutosave,
+  haveLocalAutosave,
+  clearLocalAutosave,
+  writeLocalAutosave
+};

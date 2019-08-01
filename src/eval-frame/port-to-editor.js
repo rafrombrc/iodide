@@ -1,7 +1,4 @@
-/* global IODIDE_EDITOR_ORIGIN  */
-
 import { evaluateCode } from "./actions/actions";
-import { evaluateFetchText } from "./actions/fetch-cell-eval-actions";
 import { loadLanguagePlugin } from "./actions/language-actions";
 import { getUserDefinedVariablesFromWindow } from "./initialize-user-variables";
 import { getCompletions } from "./tools/notebook-utils";
@@ -10,7 +7,16 @@ import {
   onParentContextFileRequestError
 } from "./tools/send-file-request-to-editor";
 import messagePasserEval from "../shared/utils/redux-to-port-message-passer";
-import { sendStatusResponseToEditor } from "./actions/editor-message-senders";
+import {
+  sendStatusResponseToEditor,
+  sendResponseMessageToEditor
+} from "./actions/editor-message-senders";
+import {
+  addCSS,
+  loadScriptFromBlob,
+  setVariableInWindow
+} from "./actions/fetch-cell-eval-actions";
+import { repInfoRequestResponseFromEvalFrame } from "./eval-frame-rep-info-request-response";
 
 const mc = new MessageChannel();
 const portToEditor = mc.port1;
@@ -31,11 +37,11 @@ function connectToEditor() {
     // IFRAME CONNECT STEP 1:
     // "EVAL_FRAME_READY" is sent until the editor recieves
     setTimeout(connectToEditor, 50);
-    window.parent.postMessage("EVAL_FRAME_READY", IODIDE_EDITOR_ORIGIN);
+    window.parent.postMessage("EVAL_FRAME_READY", window.editorOrigin);
   } else {
     // IFRAME CONNECT STEP 5:
     // when editorReady===true, eval frame sends actual port
-    window.parent.postMessage("EVAL_FRAME_SENDING_PORT", IODIDE_EDITOR_ORIGIN, [
+    window.parent.postMessage("EVAL_FRAME_SENDING_PORT", window.editorOrigin, [
       mc.port2
     ]);
   }
@@ -51,13 +57,18 @@ messagePasserEval.connectPostMessage(postMessageToEditor);
 async function receiveMessage(event) {
   const trustedMessage = true;
   if (trustedMessage) {
-    const { messageType, message } = event.data;
+    const { messageType, message, messageId } = event.data;
     switch (messageType) {
       case "STATE_UPDATE_FROM_EDITOR": {
         messagePasserEval.dispatch({
           type: "REPLACE_STATE",
           state: message
         });
+        break;
+      }
+      case "REP_INFO_REQUEST": {
+        const repInfo = repInfoRequestResponseFromEvalFrame(message);
+        sendResponseMessageToEditor("SUCCESS", messageId, repInfo);
         break;
       }
       case "REQUESTED_FILE_OPERATION_SUCCESS": {
@@ -85,11 +96,6 @@ async function receiveMessage(event) {
         evaluateCode(code, language, chunkId, taskId);
         break;
       }
-      case "EVAL_FETCH": {
-        const { fetchText, taskId } = message;
-        await evaluateFetchText(fetchText, taskId);
-        break;
-      }
       case "EVAL_LANGUAGE_PLUGIN": {
         const { pluginData, taskId } = message;
         // FIXME: this can be cleaned up, but loadLanguagePlugin
@@ -108,6 +114,36 @@ async function receiveMessage(event) {
         });
         break;
       }
+      case "ASSIGN_VARIABLE": {
+        const { name, value } = message;
+        try {
+          setVariableInWindow(name, value);
+          sendStatusResponseToEditor("SUCCESS", message.taskId);
+        } catch {
+          sendStatusResponseToEditor("ERROR", message.taskId);
+        }
+        break;
+      }
+      case "LOAD_SCRIPT": {
+        const { script } = message;
+        try {
+          loadScriptFromBlob(script);
+          sendStatusResponseToEditor("SUCCESS", message.taskId);
+        } catch {
+          sendStatusResponseToEditor("ERROR", message.taskId);
+        }
+        break;
+      }
+      case "ADD_CSS": {
+        const { css, filePath } = message;
+        try {
+          addCSS(css, filePath);
+          sendStatusResponseToEditor("SUCCESS", message.taskId);
+        } catch {
+          sendStatusResponseToEditor("ERROR", message.taskId);
+        }
+        break;
+      }
       default:
         console.error("unknown messageType", messageType, message);
     }
@@ -118,8 +154,4 @@ portToEditor.onmessage = receiveMessage;
 
 export function postActionToEditor(actionObj) {
   postMessageToEditor("REDUX_ACTION", actionObj);
-}
-
-export function postKeypressToEditor(keypressStr) {
-  postMessageToEditor("KEYPRESS", keypressStr);
 }

@@ -4,10 +4,12 @@ import thunk from "redux-thunk";
 import {
   addToEvalQueue,
   evaluateNotebook,
-  evalConsoleInput,
   evaluateText
 } from "../eval-actions";
+
+import { evalConsoleInput } from "../console-actions";
 import { NONCODE_EVAL_TYPES } from "../../state-schemas/state-schema";
+import { jsLanguageDefinition } from "../../state-schemas/language-definitions";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -18,19 +20,19 @@ describe("evaluateNotebook", () => {
   beforeEach(() => {
     store = undefined;
     testState = {
-      jsmdChunks: [
-        { id: 0, evalFlags: ["skipRunAll"] },
-        { id: 1, evalFlags: [] },
-        { id: 2, evalFlags: ["skipRunAll"] },
-        { id: 3, evalFlags: [] }
+      iomdChunks: [
+        { id: 0, evalFlags: ["skipRunAll"], chunkContent: "foo" },
+        { id: 1, evalFlags: [], chunkContent: "foo" },
+        { id: 2, evalFlags: ["skipRunAll"], chunkContent: "foo" },
+        { id: 3, evalFlags: [], chunkContent: "foo" }
       ]
     };
   });
 
   it("pass correct chunks", () => {
     const expectedActions = [
-      { type: "ADD_TO_EVAL_QUEUE", chunk: testState.jsmdChunks[1] },
-      { type: "ADD_TO_EVAL_QUEUE", chunk: testState.jsmdChunks[3] }
+      { type: "ADD_TO_EVAL_QUEUE", chunk: testState.iomdChunks[1] },
+      { type: "ADD_TO_EVAL_QUEUE", chunk: testState.iomdChunks[3] }
     ];
 
     store = mockStore(testState);
@@ -50,7 +52,7 @@ describe("addToEvalQueue", () => {
 
   // some random types that SHOULD be enqueued
   ["js", "py", "jl", "etc"].forEach(chunkType => {
-    const chunk = { chunkType };
+    const chunk = { chunkType, chunkContent: "foo" };
     it("dispatch if chunk of any type other than NONCODE_EVAL_TYPES", () => {
       addToEvalQueue(chunk)(dispatch);
       expect(dispatch).toBeCalledWith({ type: "ADD_TO_EVAL_QUEUE", chunk });
@@ -58,8 +60,28 @@ describe("addToEvalQueue", () => {
   });
 
   NONCODE_EVAL_TYPES.forEach(chunkType => {
-    const chunk = { chunkType };
+    const chunk = { chunkType, chunkContent: "foo" };
     it("DO NOT dispatch if chunk of any NONCODE_EVAL_TYPES", () => {
+      addToEvalQueue(chunk)(dispatch);
+      expect(dispatch).not.toBeCalled();
+    });
+  });
+
+  [
+    "",
+    `
+`,
+    "      ",
+    `  
+   
+`,
+    `
+
+
+`
+  ].forEach(chunkContent => {
+    const chunk = { chunkType: jsLanguageDefinition, chunkContent };
+    it("DO NOT dispatch if chunkContent is empty", () => {
       addToEvalQueue(chunk)(dispatch);
       expect(dispatch).not.toBeCalled();
     });
@@ -118,7 +140,7 @@ describe("evaluateText", () => {
   beforeEach(() => {
     store = undefined;
     testState = {
-      jsmdChunks: [0, 1, 2, 3, 4].map(i => {
+      iomdChunks: [0, 1, 2, 3, 4].map(i => {
         return {
           startLine: 10 * i,
           endLine: 10 * (i + 1) - 1,
@@ -139,7 +161,7 @@ describe("evaluateText", () => {
       store.dispatch(evaluateText());
 
       const expectedActions = [
-        { type: "ADD_TO_EVAL_QUEUE", chunk: testState.jsmdChunks[i] }
+        { type: "ADD_TO_EVAL_QUEUE", chunk: testState.iomdChunks[i] }
       ];
       expect(store.getActions()).toEqual(expectedActions);
     });
@@ -155,7 +177,7 @@ describe("evaluateText", () => {
     // store = mockStore(testState);
     // store.dispatch(evaluateText(consoleText));
     // const expectedActions = [
-    //   { type: "ADD_TO_EVAL_QUEUE", chunktestState.jsmdChunks[i] },
+    //   { type: "ADD_TO_EVAL_QUEUE", chunktestState.iomdChunks[i] },
     // ];
     // expect(store.getActions()).toEqual(expectedActions);
   });

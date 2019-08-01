@@ -2,7 +2,7 @@
 
 **[Getting started and key concepts](key_concepts.md)**: The central concepts in Iodide, and how to get started.
 
-**[JSMD format](jsmd.md)**: The simple file format used to write Iodide notebooks.
+**[IOMD format](iomd.md)**: The simple file format used to write Iodide notebooks.
 
 **[Language plugins](language_plugins.md)**: Support for programming languages
 other than JavaScript.
@@ -22,9 +22,14 @@ Iodide notebooks.
 
 **[Local development](local-dev.md)**: Setting up a local development environment.
 
-**[Server administration](server-admin.md)**: Information on common server administration tasks.
-
 **[Making a new release](making-a-new-release.md)**: Step-by-step instructions for making a new Iodide release.
+
+## Server administration
+
+**[Overview](server-admin-overview.md)**: Overview of what is required to set up an Iodide server instance.
+
+**[Common tasks](common-server-tasks.md)**: Information on common server administration tasks.
+
 
 ## Policies and terms
 

@@ -7,7 +7,7 @@ import MenuDivider from "../../shared/components/menu-divider";
 import DeleteModal from "./delete-modal";
 import UploadModal from "./upload-modal";
 import {
-  selectFileAndFormatMetadata,
+  selectSingleFileAndFormatMetadata,
   uploadFile
 } from "../../shared/utils/file-operations";
 import { deleteNotebookRequest } from "../../shared/server-api/notebook";
@@ -52,12 +52,14 @@ export default class NotebookActionsMenu extends React.Component {
     this.goToRevisionsPage = this.goToRevisionsPage.bind(this);
   }
 
+  // FIXME: Rewrite with async/await
+  // https://github.com/iodide-project/iodide/pull/1676/files#r282216780
   selectFile(notebookID) {
-    selectFileAndFormatMetadata(notebookID).then(formData => {
+    selectSingleFileAndFormatMetadata(notebookID).then(formData => {
       let filename;
       try {
         const metadata = JSON.parse(formData.get("metadata"));
-        filename = metadata.filename; // eslint-disable-line
+        filename = metadata.filename; // eslint-disable-line prefer-destructuring
       } catch (err) {
         throw err;
       }
@@ -156,18 +158,16 @@ export default class NotebookActionsMenu extends React.Component {
         </Popover>
         <DeleteModal
           visible={this.state.deleteModalVisible}
-          onClose={this.hideDeleteModal}
+          onCloseOrCancel={this.hideDeleteModal}
           title={`delete the notebook  "${this.props.notebookTitle}"?`}
           content={this.props.modalBody}
-          onCancel={this.hideDeleteModal}
           onDelete={this.props.onDelete}
           elementID={this.props.notebookID}
           deleteFunction={deleteNotebookRequest}
         />
         <UploadModal
           visible={this.state.uploadFileConfirmationVisible}
-          onClose={this.hideUploadFileConfirmationModal}
-          onCancel={this.hideUploadFileConfirmationModal}
+          onCloseOrCancel={this.hideUploadFileConfirmationModal}
           onUpdateFile={this.updateFile}
           oldFile={this.state.oldFile}
         />

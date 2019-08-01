@@ -19,6 +19,8 @@ import "./style/menu-and-button-and-ui-styles.css";
 import "./style/codemirror-styles.css";
 import "./style/help-modal-styles.css";
 import "./style/golden-layout-style-overrides.css";
+import "./style/eval-container.css";
+import "./style/jupyter-rendered-html-styles.css";
 
 // theme settings
 import "./style/client-style-defaults";
@@ -27,7 +29,7 @@ import NotebookHeader from "./components/menu/notebook-header";
 import EditorPaneContainer from "./components/editor-pane-container";
 import { store } from "./store";
 import messagePasserEditor from "../shared/utils/redux-to-port-message-passer";
-import handleInitialJsmd from "./initialization/handle-initial-jsmd";
+import handleInitialIomd from "./initialization/handle-initial-iomd";
 import handleServerVariables from "./initialization/handle-server-variables";
 import handleReportViewModeInitialization from "./initialization/handle-report-view-mode-initialization";
 import { initializeDefaultKeybindings } from "./initialization/keybindings";
@@ -35,7 +37,6 @@ import { initializeDefaultKeybindings } from "./initialization/keybindings";
 import { listenForEvalFramePortReady } from "./port-to-eval-frame";
 
 import "./initialization/initialize-codemirror-loadmode";
-import "./initialization/initialize-dom";
 import { restoreLocalAutosave } from "./actions/local-autosave-actions";
 import { handleEditorVisibilityChange } from "./actions/window-actions";
 import CSSCascadeProvider from "../shared/components/css-cascade-provider";
@@ -45,7 +46,7 @@ initializeDefaultKeybindings();
 window.addEventListener("message", listenForEvalFramePortReady, false);
 
 handleServerVariables(store);
-handleInitialJsmd(store);
+handleInitialIomd(store);
 store.dispatch(restoreLocalAutosave());
 handleReportViewModeInitialization(store);
 

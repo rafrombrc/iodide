@@ -49,16 +49,6 @@ describe("make sure action creators leave store in a consitent state", () => {
     expect(() => store.dispatch(actions.toggleWrapInEditors())).not.toThrow();
   });
 
-  // FIXME: side effects in the reducer make these hard to test
-  // it('exportNotebook', () => {
-  //   expect(() => store.dispatch(actions.exportNotebook()))
-  //     .not.toThrow()
-  // })
-  // it('exportNotebook, true', () => {
-  //   expect(() => store.dispatch(actions.exportNotebook(true)))
-  //     .not.toThrow()
-  // })
-
   it("saveNotebook", () => {
     expect(() => store.dispatch(actions.saveNotebook())).not.toThrow();
   });
@@ -101,18 +91,6 @@ describe("make sure action creators leave store in a consitent state", () => {
 
   it("toggleEditorLink", () => {
     expect(() => store.dispatch(actions.clearVariables())).not.toThrow();
-  });
-
-  it("saveEnvironment", () => {
-    expect(() =>
-      store.dispatch(actions.saveEnvironment({ a: ["string", "foo"] }, true))
-    ).not.toThrow();
-  });
-
-  it("saveEnvironment", () => {
-    expect(() =>
-      store.dispatch(actions.saveEnvironment({ a: ["string", "foo"] }, false))
-    ).not.toThrow();
   });
 });
 

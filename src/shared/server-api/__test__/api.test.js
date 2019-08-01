@@ -11,8 +11,9 @@ import {
   deleteNotebookRevisionRequest
 } from "../notebook";
 
-describe("file api methods", () => {
+describe("api methods", () => {
   beforeEach(() => {
+    document.cookie = "jwt-access-token=12345;";
     fetch.resetMocks();
   });
 
@@ -94,9 +95,7 @@ describe("file api methods", () => {
         expectedDetail: "Some horrible thing"
       }
     ].forEach(testFailure => {
-      it(`${test.fn.name} fail - ${
-        testFailure.errorCode
-      } return code`, async () => {
+      it(`${test.fn.name} fail - ${testFailure.errorCode} return code`, async () => {
         fetch.mockResponseOnce(JSON.stringify(testFailure.response), {
           status: testFailure.errorCode
         });

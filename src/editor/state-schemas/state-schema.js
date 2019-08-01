@@ -51,14 +51,6 @@ export const fileSchema = {
   additionalProperties: false
 };
 
-const environmentVariableSchema = {
-  type: "array",
-  items: [
-    { type: "string", enum: ["object", "string", "rawString"] },
-    { type: "string" }
-  ]
-};
-
 const panePositionSchema = {
   type: "object",
   properties: {
@@ -148,19 +140,19 @@ export const stateProperties = {
     items: historySchema,
     default: []
   },
-  jsmd: {
+  iomd: {
     type: "string",
     default: ""
   },
   previouslySavedContent: {
     type: "object",
-    default: { title: "", jsmd: "" },
+    default: { title: "", iomd: "" },
     properties: {
       title: { type: "string" },
-      jsmd: { type: "string" }
+      iomd: { type: "string" }
     }
   },
-  jsmdChunks: {
+  iomdChunks: {
     type: "array",
     items: {
       type: "object",
@@ -204,7 +196,7 @@ export const stateProperties = {
   },
   modalState: {
     type: "string",
-    enum: ["HELP_MODAL", "HISTORY_MODAL", "MODALS_CLOSED"],
+    enum: ["HELP_MODAL", "HISTORY_MODAL", "FILE_MODAL", "MODALS_CLOSED"],
     default: "MODALS_CLOSED"
   },
   kernelState: {
@@ -221,6 +213,10 @@ export const stateProperties = {
   notebookHistory: {
     type: "object",
     properties: {
+      hasLocalOnlyChanges: {
+        type: "boolean",
+        default: false
+      },
       revisionContentFetchStatus: {
         type: "string",
         enum: ["FETCHING", "ERROR", "IDLE"],
@@ -243,7 +239,7 @@ export const stateProperties = {
         },
         default: []
       },
-      selectedRevision: {
+      selectedRevisionId: {
         type: "number"
       },
       revisionContent: {
@@ -290,11 +286,6 @@ export const stateProperties = {
       ConsolePositioner: Object.assign({}, positionerDefaults),
       WorkspacePositioner: Object.assign({}, positionerDefaults)
     }
-  },
-  savedEnvironment: {
-    type: "object",
-    additionalProperties: environmentVariableSchema,
-    default: {}
   },
   title: {
     type: "string",

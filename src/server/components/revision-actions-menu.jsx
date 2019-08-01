@@ -38,9 +38,7 @@ export default class RevisionsActionsMenu extends React.Component {
   }
 
   viewRevision() {
-    window.location = `/notebooks/${this.props.notebookID}?revision=${
-      this.props.revisionID
-    }`;
+    window.location = `/notebooks/${this.props.notebookID}?revision=${this.props.revisionID}`;
   }
 
   render() {
@@ -60,10 +58,9 @@ export default class RevisionsActionsMenu extends React.Component {
         </Popover>
         <DeleteModal
           visible={this.state.deleteModalVisible}
-          onClose={this.hideDeleteModal}
+          onCloseOrCancel={this.hideDeleteModal}
           title={`delete the revision  "${this.props.revisionTitle}"?`}
           content={this.props.modalBody}
-          onCancel={this.hideDeleteModal}
           onDelete={this.props.onDelete}
           elementID={this.props.revisionID}
           deleteFunction={revisionID =>

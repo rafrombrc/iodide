@@ -1,7 +1,37 @@
 # (Unreleased; add upcoming change notes here)
 
-- Add favicon to iodide (fixes #826)
+- removes iodide.environment API
+- Add back local-only dev mode using command "npm run simple-serve"
+- Iodide docker container no longer hardcodes server hostnames, can
+  reuse in multiple server environments (#1943)
+- Hide "unsaved changes" in revision browser if no unsaved changes (#2046)
+- Show revision, docs, contribute links even on non-public sites
+
+# 0.10.0 (2019-07-15)
+
+- Overhauls Iodide's data formatters to cover more data types, allow folding of long results, and many other enhancements
+- Deprecates the need for the `files/` prefix in fetch chunks.
+- Introduces the `plugin` fetch type in fetch chunks.
+- No longer swallowing errors in plugin loader code (fixes #2010)
+
+# 0.9.0 (2019-07-03)
+
+- Reduce the image size for small user icons, to improve loading times (fixes #1711)
+- Fix loading revision browser when authentication credentials are required
+  for read-only API endpoints (partially fixes #1965)
+- Fix authentication hole in files api validation that would allow any logged-in
+  user to modify or create a file on another's behalf.
+
+# 0.8.0 (2019-06-18)
+
+- Adds favicon to iodide (fixes #826)
 - Adds JWT-based authentication to Iodide's API as an option (fixes #1755)
+- Rebrand the "jsmd" file format as "iomd" (fixes #1634)
+- Adds ability to restrict server API to authenticated users only
+  (disallowing read-only API access; fixes #1879)
+- Gravatars are served via https by default (fixes #1930)
+- Add new file management UI (click _Menu > Manage Files_ while logged in and
+  viewing a notebook that you own)
 
 # 0.7.0 (2019-05-30)
 

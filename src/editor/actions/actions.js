@@ -1,15 +1,17 @@
 import { getUrlParams, objectToQueryString } from "../tools/query-param-tools";
+import { getRevisionIdsNeededForDisplay } from "../tools/revision-history";
 import {
   getRevisionList,
-  getRevisions,
-  getRevisionIdsNeededForDisplay
-} from "../tools/revision-history";
-import { getNotebookID, getUserDataFromDocument } from "../tools/server-tools";
+  getRevisions
+} from "../../shared/server-api/revisions";
+import { haveLocalAutosave } from "../tools/local-autosave";
+import {
+  getNotebookID,
+  getUserDataFromDocument,
+  isLoggedIn
+} from "../tools/server-tools";
 
-import { jsmdParser } from "../jsmd-tools/jsmd-parser";
-import { getChunkContainingLine } from "../jsmd-tools/jsmd-selection";
-
-import { exportJsmdBundle, titleToHtmlFilename } from "../tools/export-tools";
+import { getChunkContainingLine } from "../iomd-tools/iomd-selection";
 
 import { addAppMessageToConsoleHistory } from "./console-message-actions";
 
@@ -28,57 +30,12 @@ export function updateAppMessages(messageObj) {
   };
 }
 
-export function updateJsmdContent(text) {
-  return (dispatch, getState) => {
-    const jsmdChunks = jsmdParser(text);
-    const languageDefinitions = getState().languageDefinitions || {};
-    const reportChunkTypes = Object.keys(languageDefinitions).concat([
-      "md",
-      "html",
-      "css"
-    ]);
-    const reportChunks = jsmdChunks
-      .filter(c => reportChunkTypes.includes(c.chunkType))
-      .map(c => ({
-        chunkContent: c.chunkContent,
-        chunkType: c.chunkType,
-        chunkId: c.chunkId,
-        evalFlags: c.evalFlags
-      }));
-
-    dispatch({
-      // this dispatch really just forwards to the eval frame
-      type: "UPDATE_MARKDOWN_CHUNKS",
-      reportChunks
-    });
-    dispatch({
-      type: "UPDATE_JSMD_CONTENT",
-      jsmd: text,
-      jsmdChunks
-    });
-  };
+export function updateIomdContent(text) {
+  return { type: "UPDATE_IOMD_CONTENT", iomd: text };
 }
 
 export function toggleWrapInEditors() {
   return { type: "TOGGLE_WRAP_IN_EDITORS" };
-}
-
-export function exportNotebook(exportAsReport = false) {
-  return (_, getState) => {
-    const state = getState();
-    const exportState = Object.assign({}, state, {
-      viewMode: exportAsReport ? "REPORT_VIEW" : "EXPLORE_VIEW"
-    });
-    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(
-      exportJsmdBundle(exportState.jsmd, exportState.title)
-    )}`;
-    const dlAnchorElem = document.getElementById("export-anchor");
-    dlAnchorElem.setAttribute("href", dataStr);
-    const title =
-      exportState.title === undefined ? "new-notebook" : exportState.title;
-    dlAnchorElem.setAttribute("download", titleToHtmlFilename(title));
-    dlAnchorElem.click();
-  };
 }
 
 export function saveNotebook() {
@@ -146,7 +103,7 @@ export function moveCursorToNextChunk() {
   return (dispatch, getState) => {
     const {
       editorSelections: selections,
-      jsmdChunks,
+      iomdChunks,
       editorCursor
     } = getState();
     const targetLine =
@@ -154,7 +111,7 @@ export function moveCursorToNextChunk() {
         ? editorCursor.line
         : selections[selections.length - 1].end.line;
 
-    const targetChunk = getChunkContainingLine(jsmdChunks, targetLine);
+    const targetChunk = getChunkContainingLine(iomdChunks, targetLine);
     dispatch(updateEditorCursor(targetChunk.endLine + 1, 0, true));
   };
 }
@@ -172,7 +129,7 @@ function getRequiredRevisionContent(state, dispatch) {
   dispatch({
     type: "GETTING_REVISION_CONTENT"
   });
-  getRevisions(getNotebookID(state), contentIdsNeeded)
+  getRevisions(getNotebookID(state), contentIdsNeeded, isLoggedIn(state))
     .then(revisions => {
       // reduce the revisions array into an object whose keys
       // are revision ids, and whose body is the content of
@@ -204,13 +161,23 @@ export function updateSelectedRevisionId(selectedRevisionId) {
 export function getNotebookRevisionList() {
   return (dispatch, getState) => {
     dispatch({ type: "GETTING_NOTEBOOK_REVISION_LIST" });
-    getRevisionList(getNotebookID(getState()))
+    getRevisionList(getNotebookID(getState()), isLoggedIn(getState()))
       .then(revisionList => {
-        dispatch({
-          type: "GOT_NOTEBOOK_REVISION_LIST",
-          revisionList
-        });
-        getRequiredRevisionContent(getState(), dispatch);
+        haveLocalAutosave(getState())
+          .then(havePendingChanges => {
+            dispatch({
+              type: "UPDATE_NOTEBOOK_HISTORY",
+              hasLocalOnlyChanges: havePendingChanges,
+              revisionList,
+              selectedRevisionId: havePendingChanges
+                ? undefined
+                : revisionList[0].id
+            });
+            getRequiredRevisionContent(getState(), dispatch);
+          })
+          .catch(() => {
+            dispatch({ type: "ERROR_GETTING_NOTEBOOK_REVISION_LIST" });
+          });
       })
       .catch(() => {
         dispatch({ type: "ERROR_GETTING_NOTEBOOK_REVISION_LIST" });
@@ -250,16 +217,16 @@ export function toggleHelpModal() {
   };
 }
 
-export function toggleEditorLink() {
-  return {
-    type: "TOGGLE_EDITOR_LINK"
+export function toggleFileModal() {
+  return (dispatch, getState) => {
+    const modalState =
+      getState().modalState === "FILE_MODAL" ? "MODALS_CLOSED" : "FILE_MODAL";
+    dispatch(setModalState(modalState));
   };
 }
 
-export function saveEnvironment(updateObj, update) {
+export function toggleEditorLink() {
   return {
-    type: "SAVE_ENVIRONMENT",
-    updateObj,
-    update
+    type: "TOGGLE_EDITOR_LINK"
   };
 }

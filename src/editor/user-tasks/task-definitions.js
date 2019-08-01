@@ -67,41 +67,18 @@ tasks.toggleWrapInEditors = new UserTask({
   }
 });
 
-tasks.changeTitle = new UserTask({
-  title: "Change Title",
-  callback(t) {
-    dispatcher.updateTitle(t);
-  }
-});
-
 tasks.newNotebook = new ExternalLinkTask({
   title: "New Notebook",
   url: "/new"
 });
 
 // this overrides the browser default's ctrl+s but otherwise does nothing.
+// displayKeybinding not needed
 tasks.saveNotebook = new UserTask({
   title: "Save Notebook",
   keybindings: ["ctrl+s", "meta+s"],
-  displayKeybinding: `${commandKey}+s`,
   preventDefaultKeybinding: true,
   callback() {}
-});
-
-tasks.exportNotebook = new UserTask({
-  title: "Export Notebook",
-  keybindings: ["ctrl+shift+e", "meta+shift+e"],
-  displayKeybinding: `Shift+${commandKey}+e`,
-  callback() {
-    dispatcher.exportNotebook();
-  }
-});
-
-tasks.exportNotebookAsReport = new UserTask({
-  title: "Export Notebook as Report",
-  callback() {
-    dispatcher.exportNotebook(true, false);
-  }
 });
 
 tasks.clearVariables = new UserTask({
@@ -109,6 +86,13 @@ tasks.clearVariables = new UserTask({
   preventDefaultKeybinding: true,
   callback() {
     dispatcher.clearVariables();
+  }
+});
+
+tasks.toggleFileModal = new UserTask({
+  title: "Manage Files",
+  callback() {
+    dispatcher.toggleFileModal();
   }
 });
 
@@ -128,20 +112,6 @@ tasks.toggleHelpModal = new UserTask({
   preventDefaultKeybinding: true,
   callback() {
     dispatcher.toggleHelpModal();
-  }
-});
-
-tasks.setViewModeToEditor = new UserTask({
-  title: "Set View Mode to Editor",
-  callback() {
-    dispatcher.setViewMode("EXPLORE_VIEW");
-  }
-});
-
-tasks.setViewModeToPresentation = new UserTask({
-  title: "Set View Mode to Presentation",
-  callback() {
-    dispatcher.setViewMode("REPORT_VIEW");
   }
 });
 

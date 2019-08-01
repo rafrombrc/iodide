@@ -1,5 +1,6 @@
 import { newNotebook } from "../state-schemas/editor-state-prototypes";
 import { historyIdGen } from "../tools/id-generators";
+import { iomdParser } from "../iomd-tools/iomd-parser";
 
 function newAppMessage(
   appMessageId,
@@ -42,14 +43,6 @@ const notebookReducer = (state = newNotebook(), action) => {
     case "TOGGLE_WRAP_IN_EDITORS":
       return Object.assign({}, state, { wrapEditors: !state.wrapEditors });
 
-    case "REPLACE_NOTEBOOK_CONTENT": {
-      return Object.assign({}, state, {
-        jsmd: action.jsmd,
-        jsmdChunks: action.jsmdChunks,
-        title: action.title || state.title
-      });
-    }
-
     case "UPDATE_CURSOR": {
       const { line, col, forceUpdate } = action;
       return Object.assign({}, state, {
@@ -63,9 +56,9 @@ const notebookReducer = (state = newNotebook(), action) => {
       });
     }
 
-    case "UPDATE_JSMD_CONTENT": {
-      const { jsmd, jsmdChunks } = action;
-      return Object.assign({}, state, { jsmd, jsmdChunks });
+    case "UPDATE_IOMD_CONTENT": {
+      const { iomd } = action;
+      return Object.assign({}, state, { iomd, iomdChunks: iomdParser(iomd) });
     }
 
     case "GETTING_NOTEBOOK_REVISION_LIST": {
@@ -77,11 +70,12 @@ const notebookReducer = (state = newNotebook(), action) => {
       });
     }
 
-    case "GOT_NOTEBOOK_REVISION_LIST": {
-      const { revisionList, selectedRevisionId } = action;
+    case "UPDATE_NOTEBOOK_HISTORY": {
+      const { hasLocalOnlyChanges, revisionList, selectedRevisionId } = action;
       return Object.assign({}, state, {
         notebookHistory: {
           ...(state.notebookHistory || {}),
+          hasLocalOnlyChanges,
           revisionList,
           revisionListFetchStatus: "IDLE",
           selectedRevisionId
@@ -217,22 +211,6 @@ const notebookReducer = (state = newNotebook(), action) => {
       nextState = Object.assign({}, state);
       nextState.appMessages = nextState.appMessages.slice();
       return addAppMessageToState(nextState, Object.assign({}, action.message));
-    }
-
-    case "ENVIRONMENT_UPDATE_FROM_EVAL_FRAME": {
-      let newSavedEnvironment;
-      if (action.update) {
-        newSavedEnvironment = Object.assign(
-          {},
-          state.savedEnvironment,
-          action.updateObj
-        );
-      } else {
-        newSavedEnvironment = action.updateObj;
-      }
-      return Object.assign({}, state, {
-        savedEnvironment: newSavedEnvironment
-      });
     }
 
     case "ADD_LANGUAGE_TO_EDITOR": {

@@ -6,14 +6,14 @@ import {
 } from "../server-api/file";
 
 export function loadFileFromServer(path, fetchType) {
-  return genericFetch(path, fetchType);
+  return genericFetch(`files/${path}`, fetchType);
 }
 
 export function valueToFile(data, fileName) {
   return new File([data], fileName);
 }
 
-export function selectFileAndFormatMetadata(notebookID) {
+export function selectSingleFileAndFormatMetadata(notebookID) {
   return new Promise(resolve => {
     const filePicker = document.createElement("input");
     filePicker.type = "file";
@@ -32,6 +32,37 @@ export function selectFileAndFormatMetadata(notebookID) {
       );
       formData.append("file", file);
       resolve(formData);
+    });
+  });
+}
+
+export function selectMultipleFilesAndFormatMetadata(notebookID) {
+  return new Promise(resolve => {
+    const formDataPromises = [];
+    const filePicker = document.createElement("input");
+    filePicker.type = "file";
+    filePicker.id = "file-picker";
+    filePicker.name = "files[]";
+    filePicker.multiple = "multiple";
+    filePicker.click();
+    filePicker.addEventListener("change", evt => {
+      Array.from(evt.target.files).forEach(file => {
+        formDataPromises.push(
+          new Promise(formDataResolve => {
+            const formData = new FormData();
+            formData.append(
+              "metadata",
+              JSON.stringify({
+                filename: file.name,
+                notebook_id: notebookID
+              })
+            );
+            formData.append("file", file);
+            formDataResolve(formData);
+          })
+        );
+      });
+      Promise.all(formDataPromises).then(resolve);
     });
   });
 }

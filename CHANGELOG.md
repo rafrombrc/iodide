@@ -1,11 +1,14 @@
 # (Unreleased; add upcoming change notes here)
 
-- removes iodide.environment API
+- Removed iodide.environment API
 - Add back local-only dev mode using command "npm run simple-serve"
 - Iodide docker container no longer hardcodes server hostnames, can
   reuse in multiple server environments (#1943)
 - Hide "unsaved changes" in revision browser if no unsaved changes (#2046)
 - Show revision, docs, contribute links even on non-public sites
+- Disable "History" menu item for the tryit notebook
+- Add documentation for how the Iodide server's authentication system works
+- Migrated to Monaco editor, providing several text editing improvements (find/replace text; autocomplete, including hits for Iodide custom chunk types; etc)
 
 # 0.10.0 (2019-07-15)
 
